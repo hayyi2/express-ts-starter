@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
-import { prisma } from '../libs/prisma'
+import { UserAuth, prisma } from '../libs/prisma'
 import { User } from '@prisma/client'
 import { AppRequest } from '../types'
 import { BaseError, ValidationError } from '../errors'
@@ -151,10 +151,11 @@ export const authMiddleware = async (req: AppRequest, res: Response, next: NextF
         }
         const token = tokenValidate.data.authorization.split(' ')[1]
 
-        req.userAuth = await validAccessToken(token)
-        if (!req.userAuth) {
+        const user = await validAccessToken(token)
+        if (!user) {
             throw new BaseError('Unauthorized', 401)
         }
+        req.auth = new UserAuth(user)
     } catch (error) {
         next(error)
     }
@@ -162,14 +163,10 @@ export const authMiddleware = async (req: AppRequest, res: Response, next: NextF
     return next()
 }
 
-export const hasRole = (user: User | undefined | null, ...roles: string[]) => {
-    return roles.includes(user?.role ?? '')
-}
-
 export const hasRoleMiddleware = (...roles: string[]) => {
     return async (req: AppRequest, res: Response, next: NextFunction) => {
         try {
-            if (!hasRole(req.userAuth, ...roles)) {
+            if (req.auth?.hasRole(...roles)) {
                 throw new BaseError('Forbidden', 403)
             }
         } catch (error) {
@@ -216,7 +213,7 @@ authRoutes
     .route('/me')
     .get(authMiddleware, (req: AppRequest, res: Response, next: NextFunction) => {
         try {
-            const { name, email, phone, photo, verified, role } = req.userAuth as User
+            const { name, email, phone, photo, verified, role } = req.auth?.user as User
             return res.json({ name, email, phone, photo, verified, role })
         } catch (error) {
             next(error)
@@ -231,7 +228,7 @@ authRoutes
             const changeProfileData = changeProfileValidate.data
 
             const user = await prisma.user.update({
-                where: { id: req.userAuth?.id },
+                where: { id: req.auth?.id() },
                 data: changeProfileData,
             })
 
@@ -250,12 +247,12 @@ authRoutes.put('/password', authMiddleware, async (req: AppRequest, res: Respons
             throw new ValidationError(changePasswordValidate.error)
         }
 
-        if (req.userAuth?.password !== '' && !bcrypt.compareSync(changePasswordValidate.data.old, req.userAuth?.password ?? '')) {
+        if (req.auth?.user.password !== '' && !bcrypt.compareSync(changePasswordValidate.data.old, req.auth?.user.password ?? '')) {
             throw new BaseError('Invalid old password', 401)
         }
 
         await prisma.user.update({
-            where: { id: req.userAuth?.id },
+            where: { id: req.auth?.id() },
             data: {
                 password: bcrypt.hashSync(changePasswordValidate.data.password, bcrypt.genSaltSync()),
             },
@@ -286,12 +283,12 @@ authRoutes.put(
     }).single('photo'),
     async (req: AppRequest, res: Response, next: NextFunction) => {
         try {
-            const old_photo = req.userAuth?.photo ?? ''
+            const old_photo = req.auth?.user.photo ?? ''
             if (fs.existsSync('./public/' + old_photo)) {
                 fs.unlinkSync('./public/' + old_photo)
             }
             await prisma.user.update({
-                where: { id: req.userAuth?.id },
+                where: { id: req.auth?.id() },
                 data: {
                     photo: 'uploads/' + req.file?.filename,
                 },

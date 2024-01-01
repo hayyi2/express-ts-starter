@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, User } from '@prisma/client'
 
 export const prisma = new PrismaClient({
     log: [
@@ -6,29 +6,37 @@ export const prisma = new PrismaClient({
             emit: 'stdout',
             level: 'query',
         },
-        // {
-        //     emit: 'stdout',
-        //     level: 'error',
-        // },
-        // {
-        //     emit: 'stdout',
-        //     level: 'info',
-        // },
-        // {
-        //     emit: 'stdout',
-        //     level: 'warn',
-        // },
+        {
+            emit: 'stdout',
+            level: 'error',
+        },
+        {
+            emit: 'stdout',
+            level: 'info',
+        },
+        {
+            emit: 'stdout',
+            level: 'warn',
+        },
     ],
 })
-prisma.$extends({
-    result: {
-        user: {
-            hasRole: {
-                needs: { role: true },
-                compute(user) {
-                    return (...roles: string[]) => roles.includes(user.role ?? '')
-                },
-            },
-        },
-    },
-})
+
+interface UserAuthInterface {
+    id: () => number
+    hasRole: (...roles: string[]) => boolean
+}
+
+export class UserAuth implements UserAuthInterface {
+    user: User
+    constructor(user: User) {
+        this.user = user
+    }
+
+    id(): number {
+        return this.user.id
+    }
+
+    hasRole(...roles: string[]): boolean {
+        return roles.includes(this.user.role ?? '')
+    }
+}

@@ -2,7 +2,7 @@ import { NextFunction, Response, Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../libs/prisma'
 import { BaseError, NotFoundError, ValidationError } from '../errors'
-import { authMiddleware, hasRole } from './auth'
+import { authMiddleware } from './auth'
 import { UserRole } from './user'
 import { Post } from '@prisma/client'
 import { AppRequest } from '../types'
@@ -54,15 +54,13 @@ postRoutes
             const availableWhere = {
                 where: {
                     status: PostStatus.PUBLISH,
-                    OR: [
-                        {
-                            authorId: req.userAuth?.id,
-                        },
-                    ],
+                    OR: [{ authorId: req.auth?.id() }],
                 },
             }
+            const isAdmin = req.auth?.hasRole(UserRole.ADMIN.toString())
+            const whereQuery = isAdmin ? {} : availableWhere
             const posts = await prisma.post.findMany({
-                ...(hasRole(req.userAuth, UserRole.ADMIN) ? {} : availableWhere),
+                ...whereQuery,
                 include: includeAuthor,
             })
             return res.json(posts)
@@ -78,7 +76,7 @@ postRoutes
             }
             const postData = {
                 ...postValidate.data,
-                authorId: req.userAuth?.id ?? 0,
+                authorId: req.auth?.id() ?? 0,
             }
 
             const post = await prisma.post.create({
@@ -119,21 +117,21 @@ const postMiddleware = async (req: PostRequest, res: Response, next: NextFunctio
 }
 
 const availablePostMiddleware = (req: PostRequest, res: Response, next: NextFunction) => {
-    if (hasRole(req.userAuth, UserRole.ADMIN)) {
+    if (req.auth?.hasRole(UserRole.ADMIN)) {
         return next()
     }
     const available = [PostStatus.PUBLISH.toString(), PostStatus.UNLISTED.toString()].includes(req.post?.status ?? '')
-    if (!(available || req.post?.authorId === req.userAuth?.id)) {
+    if (!(available || req.post?.authorId === req.auth?.id())) {
         throw new NotFoundError('Post not found')
     }
     return next()
 }
 
 const selfPostMiddleware = (req: PostRequest, res: Response, next: NextFunction) => {
-    if (hasRole(req.userAuth, UserRole.ADMIN)) {
+    if (req.auth?.hasRole(UserRole.ADMIN)) {
         return next()
     }
-    if (req.post?.authorId !== req.userAuth?.id) {
+    if (req.post?.authorId !== req.auth?.id()) {
         throw new BaseError('Forbidden', 403)
     }
     return next()
