@@ -1,5 +1,5 @@
 import multer from 'multer'
-import { BaseError } from '../errors'
+import { BaseError } from './errors'
 import { v4 } from 'uuid'
 
 export const storage = multer.diskStorage({

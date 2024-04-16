@@ -6,41 +6,49 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        Int         @id @default(autoincrement())
-  email     String      @unique
-  password  String      @default("")
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   @default("")
   name      String
-  phone     String      @default("")
-  photo     String      @default("")
-  verified  Boolean     @default(false)
-  role      String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  posts     Post[]
-  UserToken UserToken[]
+  photo     String   @default("")
+  enable    Boolean  @default(true)
+  role      String
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  tokens UserToken[]
+  notes  Note[]
+
+  @@map(name: "users")
 }
 
 model UserToken {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  accessToken  String
-  refreshToken String
-  experiedAt   DateTime
-  user         User     @relation(fields: [userId], references: [id])
+  id           String @id @default(cuid())
+  userId       String @map(name: "user_id")
+  accessToken  String @map(name: "access_token")
+  refreshToken String @map(name: "refresh_token")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map(name: "user_tokens")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  authorId  Int
+// sample module
+
+model Note {
+  id        String   @id @default(cuid())
+  authorId  String   @map(name: "author_id")
   title     String
-  content   String
-  status    String
+  content   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@map(name: "notes")
 }

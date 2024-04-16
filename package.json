@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts --respawn",
-    "build": "rimraf ./build && tsc -p ./tsconfig.json",
-    "start": "node ./build/index.js",
-    "lint": "eslint src/**/*.ts --fix"
+    "dev": "ts-node-dev -r tsconfig-paths/register src/index.ts --respawn",
+    "build": "rimraf ./dist && rimraf ./tsconfig.tsbuildinfo && tsc && tsc-alias",
+    "start": "node ./dist/index.js",
+    "lint": "eslint src/**/*.ts --fix",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -40,7 +41,6 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
-    "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/morgan": "^1.9.9",
@@ -55,6 +55,8 @@
     "prisma": "^5.6.0",
     "rimraf": "^5.0.5",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.8",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.2"
   },
   "prisma": {

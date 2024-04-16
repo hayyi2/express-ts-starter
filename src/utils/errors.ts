@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Request, RequestHandler, Response } from 'express'
 import { ZodError } from 'zod'
-import { logger } from './libs/logger'
+import { logger } from 'utils/logger'
 
 export class BaseError extends Error {
     status: number
@@ -20,15 +20,6 @@ export class NotFoundError extends BaseError {
     }
 }
 
-export class ValidationError extends BaseError {
-    errorData: ZodError
-    constructor(data: ZodError) {
-        super('Validation Error', 400)
-        this.errorData = data
-        Object.setPrototypeOf(this, ValidationError.prototype)
-    }
-}
-
 // not found handler middleware
 export const notFoundHandler = (req: Request) => {
     throw new NotFoundError(`Cannot ${req.method} ${req.path}`)
@@ -36,11 +27,11 @@ export const notFoundHandler = (req: Request) => {
 
 // error handler middleware
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    if (err instanceof ValidationError) {
-        return res.status(err.status).json({
+    if (err instanceof ZodError) {
+        return res.status(400).json({
             status: 'fail',
-            message: err.message,
-            data: err.errorData.issues.map(({ path, message }) => ({ path, message })),
+            message: 'Validation Error',
+            issues: err.issues.map(({ path, message }) => ({ path, message })),
         })
     } else if (err instanceof BaseError) {
         if (err.isOperational) {
@@ -62,5 +53,15 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
         })
     } else {
         return next()
+    }
+}
+
+export const catchError = (handler: RequestHandler) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await handler(req, res, next)
+        } catch (error) {
+            next(error)
+        }
     }
 }

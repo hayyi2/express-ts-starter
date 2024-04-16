@@ -2,6 +2,8 @@
 
 Express + TypeScript minimal starter for building web api.
 
+Studi Kasus: Pengelolaan note/catatan pribadi. Pengguna dapat mendaftar/masuk ke dalam aplikasi dan dapat mengelola catatan miliknya sendiri. Terdapat access role yang dapat mengelola user.
+
 ## Getting Started
 
 ```
@@ -15,9 +17,13 @@ npm run dev
 
 - [x] Setup express, typescript, and eslint
 - [x] Setup eslint and prettier
-- [x] Setup database
-- [x] Implement auth
-- [x] Implement post (Sample CRUD)
+- [x] Implement hello endpoint
+- [x] Setup database (schema & seed)
+- [x] Implement auth (login, logout, refresh token, register, profile)
+- [x] Implement manage user (CRUD)
+- [x] Implement manage note (CRUD)
+- [x] Refactor code & structure folder
+- [ ] Setup testing
 
 generate jwt secret
 ```sh

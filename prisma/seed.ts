@@ -11,11 +11,10 @@ async function main() {
             name: 'Keroro Gunsou',
             password: await bcrypt.hash('admin123', await bcrypt.genSalt()),
             role: 'admin',
-            posts: {
+            notes: {
                 create: {
-                    title: 'Check out Prisma with Next.js',
-                    content: 'https://www.prisma.io/nextjs',
-                    status: 'publish',
+                    title: 'Sample Note',
+                    content: 'Content sample note',
                 },
             },
         },
@@ -28,17 +27,15 @@ async function main() {
             name: 'User Member',
             password: await bcrypt.hash('admin123', await bcrypt.genSalt()),
             role: 'member',
-            posts: {
+            notes: {
                 create: [
                     {
-                        title: 'Follow Prisma on Twitter',
-                        content: 'https://twitter.com/prisma',
-                        status: 'publish',
+                        title: 'First Note',
+                        content: 'Content first note',
                     },
                     {
-                        title: 'Follow Nexus on Twitter',
-                        content: 'https://twitter.com/nexusgql',
-                        status: 'publish',
+                        title: 'Second Note',
+                        content: 'Content second note',
                     },
                 ],
             },

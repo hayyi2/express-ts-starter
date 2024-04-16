@@ -1,12 +1,18 @@
 import { Router } from 'express'
-import { helloRoutes } from './apis/hello'
-import { userRoutes } from './apis/user'
-import { authRoutes } from './apis/auth'
-import { postRoutes } from './apis/post'
+import { helloRoutes } from 'modules/hello/hello.routes'
+import { authRoutes } from 'modules/auth/auth.routes'
+import { profileRoutes } from 'modules/profile/profile.routes'
+import { userRoutes } from 'modules/user/user.routes'
+import { noteRoutes } from 'modules/note/note.routes'
 
 export const routes = Router()
 
 routes.use('/', helloRoutes)
-routes.use('/auth', authRoutes)
+
+// auth & profile module
+routes.use('/', authRoutes)
+routes.use('/profile', profileRoutes)
+
+// manage data module
 routes.use('/users', userRoutes)
-routes.use('/posts', postRoutes)
+routes.use('/notes', noteRoutes)
